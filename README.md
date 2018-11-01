@@ -1,2 +1,2 @@
-# FantasyBballUtils
+# ESPN Fantasy Basketball Utilities
 

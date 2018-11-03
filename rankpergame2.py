@@ -48,8 +48,8 @@ gp = stats_clean[-9:]
 stat_names = ["FG%", "FT%", "3PM", "REB", "AST", "STL", "BLK", "PTS"]
 ind = team_names
 ind.remove(my_name_clean)
-df_stats = pd.DataFrame(np.asarray(stats_clean[:-9]).reshape([9, 8]), 
-    columns=stat_names, index=ind)
+df_stats = pd.DataFrame(np.asarray(stats_clean[:-9]).reshape([9, 8]),
+                        columns=stat_names, index=ind)
 df_stats['GP'] = gp
 
 #TODO Find my_team's stats

@@ -50,8 +50,10 @@ def _scrape_user_name(soup):
     my_name_clean = str(my_name).split(">")[1].split("<")[0]
     return my_name_clean
 
-def _stats_df(soup, team_names, my_name):
+def _stats_df(soup):
     """Returns dataframe with out user stats"""
+    team_names = _scrape_names(soup)
+    my_name = _scrape_user_name(soup)
     stats = soup.find_all('div', class_='jsx-2810852873 table--cell stat-value tar')
     stats_clean = [str(i).split(">")[1].split("<")[0] for i in stats]
     gp = stats_clean[-9:]
@@ -72,9 +74,8 @@ def _my_stats_df(soup):
 
 def _create_full_stats_df(soup):
     """Returns full stats dataframe"""
-    team_names = _scrape_names(soup)
     my_name = _scrape_user_name(soup)
-    df_stats = _stats_df(soup, team_names, my_name)
+    df_stats = _stats_df(soup)
     my_df = _my_stats_df(soup)
     my_df.columns = df_stats.columns
     my_df.index = [my_name]
@@ -98,5 +99,7 @@ def rankpergame(soup):
     df_ranks['TOTAL'] = df_ranks.sum(axis=1)
     print df_ranks.sort_values('TOTAL', ascending=False)
 
-if __name__ == '__main__':
-    rankpergame(soup)
+rankpergame(soup)
+
+# if __name__ == '__main__':
+#     rankpergame(soup)

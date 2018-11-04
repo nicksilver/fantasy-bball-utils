@@ -11,7 +11,7 @@ To run script:
     python rankpergame.py "username" "password"
 """
 
-# dependencies
+# Dependencies
 import sys
 import pandas as pd
 import numpy as np
@@ -98,13 +98,12 @@ def _normalize_stats(soup):
     return df_new
 
 def rankpergame(soup):
-    """Main function the returns dataframe ranked per game"""
+    """Main function that returns dataframe ranked per game"""
     norm_stats = _normalize_stats(soup)
     df_ranks = norm_stats.rank(axis=0, method='average')
     del df_ranks['GP']
     df_ranks['TOTAL'] = df_ranks.sum(axis=1)
     print df_ranks.sort_values('TOTAL', ascending=False)
-
 
 if __name__ == '__main__':
     rankpergame(soup)

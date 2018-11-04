@@ -7,31 +7,40 @@ Install all python dependencies (i.e selenium)
 Need to install geckodriver from here: https://github.com/mozilla/geckodriver/releases
 Extract file and move: sudo mv geckodriver /usr/local/bin
 
-Be prepared to login to espn every time you run this script
+To run script:
+    python rankpergame.py "username" "password"
 """
 
-
 # dependencies
+import sys
 import pandas as pd
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
+import time
 from selenium import webdriver
-import selenium.webdriver.support.ui as ui
+from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait # available since 2.4.0
+from selenium.webdriver.support import expected_conditions as EC # available since 2.26.0
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
 
+# Open website, automatically login, and scrape html
 url = 'http://fantasy.espn.com/basketball/league/standings?leagueId=82026010'
 driver = webdriver.Firefox()
 driver.get(url)
-wait = ui.WebDriverWait(driver, 10) # timeout after 10 seconds
-
-### Pause and make sure you are signed in 
-
+WebDriverWait(driver,1000).until(EC.presence_of_all_elements_located((By.XPATH,"(//iframe)")))
+frms = driver.find_elements_by_xpath("(//iframe)")
+driver.switch_to.frame(frms[0])
+time.sleep(2)
+driver.find_element_by_xpath("(//input)[1]").send_keys(sys.argv[1])
+driver.find_element_by_xpath("(//input)[2]").send_keys(sys.argv[2])
+driver.find_element_by_xpath("//button").click()
+driver.switch_to.default_content()
+time.sleep(4)
 html = driver.page_source
 soup = BeautifulSoup(html, "lxml")
-
-#### These next few lines write the html to a file, which can be helpful
-# with open('html_sample.txt', 'w') as file:
-#     file.write(str(soup))
 
 # Soup functions
 def _scrape_names(soup):
@@ -99,7 +108,6 @@ def rankpergame(soup):
     df_ranks['TOTAL'] = df_ranks.sum(axis=1)
     print df_ranks.sort_values('TOTAL', ascending=False)
 
-rankpergame(soup)
 
-# if __name__ == '__main__':
-#     rankpergame(soup)
+if __name__ == '__main__':
+    rankpergame(soup)

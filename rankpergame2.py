@@ -111,3 +111,4 @@ def rankpergame(soup):
 
 if __name__ == '__main__':
     rankpergame(soup)
+    driver.close()

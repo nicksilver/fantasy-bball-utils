@@ -17,10 +17,12 @@ import numpy as np
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
+import selenium.webdriver.support.ui as ui
 
 url = 'http://fantasy.espn.com/basketball/league/standings?leagueId=82026010'
 driver = webdriver.Firefox()
 driver.get(url)
+wait = ui.WebDriverWait(driver, 10) # timeout after 10 seconds
 
 ### Pause and make sure you are signed in 
 
@@ -31,68 +33,70 @@ soup = BeautifulSoup(html, "lxml")
 # with open('html_sample.txt', 'w') as file:
 #     file.write(str(soup))
 
-# scrape team names
-teams = soup.find_all('span', class_ = "teamName truncate")
-team_names = []
-for team in teams:
-    name = team['title']
-    team_names.append(name)
+# Soup functions
+def _scrape_names(soup):
+    """Returns list of team names with exception of user"""
+    teams = soup.find_all('span', class_ = "teamName truncate")
+    team_names = []
+    for team in teams:
+        name = team['title']
+        team_names.append(name)
+    team_names = team_names[0:10]
+    return team_names
 
-team_names = team_names[0:10]
-my_name = soup.find_all('span', class_= "Nav__Text clr-gray-04 n8 pl3 truncate")
-my_name_clean = str(my_name).split(">")[1].split("<")[0]
+def _scrape_user_name(soup):
+    """Returns user team name"""
+    my_name = soup.find_all('span', class_= "Nav__Text clr-gray-04 n8 pl3 truncate")
+    my_name_clean = str(my_name).split(">")[1].split("<")[0]
+    return my_name_clean
 
-stats = soup.find_all('div', class_='jsx-2810852873 table--cell stat-value tar')
-stats_clean = [str(i).split(">")[1].split("<")[0] for i in stats]
-gp = stats_clean[-9:]
-stat_names = ["FG%", "FT%", "3PM", "REB", "AST", "STL", "BLK", "PTS"]
-ind = team_names
-ind.remove(my_name_clean)
-df_stats = pd.DataFrame(np.asarray(stats_clean[:-9]).reshape([9, 8]),
-                        columns=stat_names, index=ind)
-df_stats['GP'] = gp
+def _stats_df(soup, team_names, my_name):
+    """Returns dataframe with out user stats"""
+    stats = soup.find_all('div', class_='jsx-2810852873 table--cell stat-value tar')
+    stats_clean = [str(i).split(">")[1].split("<")[0] for i in stats]
+    gp = stats_clean[-9:]
+    stat_names = ["FG%", "FT%", "3PM", "REB", "AST", "STL", "BLK", "PTS"]
+    ind = team_names
+    ind.remove(my_name)
+    df_stats = pd.DataFrame(np.asarray(stats_clean[:-9]).reshape([9, 8]),
+                            columns=stat_names, index=ind)
+    df_stats['GP'] = gp
+    return df_stats
 
-#TODO Find my_team's stats
+def _my_stats_df(soup):
+    """Returns user stats without index and column names"""
+    my_stats = soup.find_all('div', class_="jsx-2810852873 table--cell stat-value tar fw-bold")
+    my_stats_clean = [str(i).split(">")[1].split("<")[0] for i in my_stats]
+    my_df = pd.DataFrame([my_stats_clean])
+    return my_df
 
+def _create_full_stats_df(soup):
+    """Returns full stats dataframe"""
+    team_names = _scrape_names(soup)
+    my_name = _scrape_user_name(soup)
+    df_stats = _stats_df(soup, team_names, my_name)
+    my_df = _my_stats_df(soup)
+    my_df.columns = df_stats.columns
+    my_df.index = [my_name]
+    df_stats = df_stats.append(my_df)
+    return df_stats.astype(float)
 
-###### Old code
-# def get_stats(stat_name):
-#     """function to scrape stats"""
-#     stats = soup.find_all('td', class_=stat_name)
-#     lis = []
-#     for stat in stats:
-#         n = float(stat.find(text=True))
-#         lis.append(n)
-#     return lis
+def _normalize_stats(soup):
+    """Returns stats dataframe normalized by games played"""
+    df_stats = _create_full_stats_df(soup)
+    df_new = df_stats.div(df_stats.GP, axis='index')
+    df_new['FG%'] = df_stats['FG%']
+    df_new['FT%'] = df_stats['FT%']
+    df_new['GP'] = df_stats['GP']
+    return df_new
 
-# # scrape stats
-# fg = get_stats('precise sortableStat19')  # field goal percentages
-# ft = get_stats('precise sortableStat20')  # free throw percentages
-# tpm = get_stats('precise sortableStat17')  # three pointers made
-# reb = get_stats('precise sortableStat6')  # rebounds
-# ast = get_stats('precise sortableStat3')  # assists
-# stl = get_stats('precise sortableStat2')  # steals
-# blk = get_stats('precise sortableStat1')  # blocks
-# pts = get_stats('precise sortableStat0')  # points
-# gp = get_stats('sortableGP')  # games played
-# moves = get_stats('sortableMoves')  # number of moves
+def rankpergame(soup):
+    """Main function the returns dataframe ranked per game"""
+    norm_stats = _normalize_stats(soup)
+    df_ranks = norm_stats.rank(axis=0, method='average')
+    del df_ranks['GP']
+    df_ranks['TOTAL'] = df_ranks.sum(axis=1)
+    print df_ranks.sort_values('TOTAL', ascending=False)
 
-# # create dataframe
-# dic = {'FG': fg, 'FT': ft, '3PM': tpm, 'REB': reb, 'AST': ast, 'STL': stl,
-#        'BLK': blk, 'PTS': pts, 'GP': gp, 'MOVES': moves}
-# df = pd.DataFrame(dic, index=team_names)
-
-# # calculate stats per games played
-# df_new = df.div(df.GP, axis='index')
-# df_new.FG = df.FG
-# df_new.FT = df.FT
-# df_new.GP = df.GP
-# df_new.MOVES = df.MOVES
-
-# # rescore and rank
-# df_ranks = df_new.rank(axis=0, method='average')
-# del df_ranks['MOVES']
-# del df_ranks['GP']
-# df_ranks['TOTAL'] = df_ranks.sum(axis=1)
-
-# print df_ranks.sort_values('TOTAL', ascending=False)
+if __name__ == '__main__':
+    rankpergame(soup)

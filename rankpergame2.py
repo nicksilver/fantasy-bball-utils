@@ -8,7 +8,7 @@ Need to install geckodriver from here: https://github.com/mozilla/geckodriver/re
 Extract file and move: sudo mv geckodriver /usr/local/bin
 
 To run script:
-    python rankpergame.py "username" "password"
+    python rankpergame2.py "username" "password"
 """
 
 # Dependencies

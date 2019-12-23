@@ -7,6 +7,7 @@ Scrapes the ESPN fantasy basketball website to calculate mid-season rankings bas
 Uses the Yahoo Fantasy API to calculate mid-season rankings based on the number of games played. You need to have authentication for the Yahoo API stored in a `oauth2.json` file.
 
 The dependencies for this program are:
+
     - Python 3
     - pandas
     - numpy

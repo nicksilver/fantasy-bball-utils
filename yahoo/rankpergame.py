@@ -53,6 +53,8 @@ def rankpergame(url_league, url_settings):
     norm_stats['FT%'] = proc_stats['FT%']
     df_ranks = norm_stats.rank(axis=0, method='average')
     df_ranks['TOTAL'] = df_ranks.sum(axis=1)
+    norm_stats['TOTAL'] = df_ranks['TOTAL']
+    print(norm_stats.sort_values('TOTAL', ascending=False))
     print(df_ranks.sort_values('TOTAL', ascending=False))
 
 if __name__ == '__main__':

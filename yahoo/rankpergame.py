@@ -1,15 +1,16 @@
 from yahoo_oauth import OAuth2
 import yahoo_fantasy_api as yfa
 import pandas as pd
-import numpy as np
 
 oauth = OAuth2(None, None, from_file='oauth2.json')
 
 if not oauth.token_is_valid():
     oauth.refresh_access_token()
 
+
 def get_response(url, payload={'format': 'json'}):
     return oauth.session.get(url, params=payload)
+
 
 def get_raw_stats(url):
     team_names = [str(i) for i in list(range(10))]
@@ -28,6 +29,7 @@ def get_raw_stats(url):
         raw_stats = raw_stats.append(df)
     return raw_stats
 
+
 def get_stat_key(url):
     response = get_response(url)
     stat_names = response.json()['fantasy_content']['league'][1]['settings'][0]['stat_categories']['stats']
@@ -37,6 +39,7 @@ def get_stat_key(url):
             stat_dict[str(sn['stat']['stat_id'])] = sn['stat']['display_name']
     return stat_dict
 
+
 def process_raw_stats(url_league, url_settings):
     raw_stats = get_raw_stats(url_league)
     stat_dict = get_stat_key(url_settings)
@@ -45,6 +48,7 @@ def process_raw_stats(url_league, url_settings):
     raw_stats = raw_stats.drop(columns=['FGM/A', 'FTM/A'])
     raw_stats = raw_stats.apply(pd.to_numeric)
     return raw_stats
+
 
 def rankpergame(url_league, url_settings):
     proc_stats = process_raw_stats(url_league, url_settings)
@@ -56,6 +60,7 @@ def rankpergame(url_league, url_settings):
     norm_stats['TOTAL'] = df_ranks['TOTAL']
     print(norm_stats.sort_values('TOTAL', ascending=False))
     print(df_ranks.sort_values('TOTAL', ascending=False))
+
 
 if __name__ == '__main__':
     gm = yfa.Game(oauth, 'nba')

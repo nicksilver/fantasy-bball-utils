@@ -1,6 +1,7 @@
 from yahoo_oauth import OAuth2
 import yahoo_fantasy_api as yfa
 import pandas as pd
+import sys
 
 oauth = OAuth2(None, None, from_file='oauth2.json')
 
@@ -52,6 +53,12 @@ def process_raw_stats(url_league, url_settings):
 
 def rankpergame(url_league, url_settings):
     proc_stats = process_raw_stats(url_league, url_settings)
+
+    # Use the drop setting if people do not seem to be playing games
+    if (len(sys.argv) > 1) and (sys.argv[1] == "--drop"):
+        keep_bool = proc_stats.GP/max(proc_stats.GP) > 0.70
+        proc_stats = proc_stats.loc[keep_bool]
+
     norm_stats = proc_stats.div(proc_stats.GP, axis=0).drop(columns=['GP'])
     norm_stats['FG%'] = proc_stats['FG%']
     norm_stats['FT%'] = proc_stats['FT%']
@@ -64,7 +71,7 @@ def rankpergame(url_league, url_settings):
 
 if __name__ == '__main__':
     gm = yfa.Game(oauth, 'nba')
-    lid = gm.league_ids(year=2019)
+    lid = gm.league_ids(year=2020)
     url_league = 'https://fantasysports.yahooapis.com/fantasy/v2/league/' + lid[0] + '/standings'
     url_settings = 'https://fantasysports.yahooapis.com/fantasy/v2/league/' + lid[0] + '/settings'
     rankpergame(url_league, url_settings)

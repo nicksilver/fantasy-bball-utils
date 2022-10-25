@@ -1,3 +1,4 @@
+from re import A
 from yahoo_oauth import OAuth2
 import yahoo_fantasy_api as yfa
 import pandas as pd
@@ -27,7 +28,7 @@ def get_raw_stats(url):
             col_names.append(str(stat['stat']['stat_id']))
             values.append(stat['stat']['value'])
         df = pd.DataFrame([values], columns=col_names, index=[nm])
-        raw_stats = raw_stats.append(df)
+        raw_stats = pd.concat([raw_stats, df], axis=0)
     return raw_stats
 
 
@@ -71,7 +72,7 @@ def rankpergame(url_league, url_settings):
 
 if __name__ == '__main__':
     gm = yfa.Game(oauth, 'nba')
-    lid = gm.league_ids(year=2020)
+    lid = gm.league_ids(year=2022)
     url_league = 'https://fantasysports.yahooapis.com/fantasy/v2/league/' + lid[0] + '/standings'
     url_settings = 'https://fantasysports.yahooapis.com/fantasy/v2/league/' + lid[0] + '/settings'
     rankpergame(url_league, url_settings)

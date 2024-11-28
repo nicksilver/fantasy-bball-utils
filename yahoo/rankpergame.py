@@ -72,7 +72,7 @@ def rankpergame(url_league, url_settings):
 
 if __name__ == '__main__':
     gm = yfa.Game(oauth, 'nba')
-    lid = gm.league_ids(year=2023)
+    lid = gm.league_ids(year=2024)
     url_league = 'https://fantasysports.yahooapis.com/fantasy/v2/league/' + lid[0] + '/standings'
     url_settings = 'https://fantasysports.yahooapis.com/fantasy/v2/league/' + lid[0] + '/settings'
     rankpergame(url_league, url_settings)
